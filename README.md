@@ -23,7 +23,7 @@ Analyze `.eml` email files to extract delivery hops, evaluate authentication and
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/yourusername/email-analyzer.git
+git clone https://github.com/TomasKasperavicius/email-analyzer.git
 cd email-analyzer
 ```
 
