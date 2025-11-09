@@ -8,6 +8,7 @@ import sys
 
 from .report import build_report
 from .html_report import generate_html_report
+from .fetch_eml import fetch_eml_from_url
 
 LOG = logging.getLogger('email_analyzer')
 
@@ -28,7 +29,6 @@ def main():
     # Handle EML fetching
     eml_path = args.eml
     if args.fetch:
-        from .fetch_eml import fetch_eml_from_url
         try:
             eml_path = fetch_eml_from_url(args.fetch)
             LOG.info('Fetched EML from: %s', args.fetch)

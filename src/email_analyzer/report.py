@@ -3,7 +3,6 @@ Report assembly: run parser, geolocation, viz and write JSON report file.
 """
 import json
 import os
-from typing import Optional
 
 from .parser import load_email, parse_received_hops, parse_authentication_results, extract_additional_headers
 from .geolocate import geolocate_ip
