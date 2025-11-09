@@ -12,8 +12,31 @@ from typing import List, Optional, Sequence, Any
 from dateutil import parser as dtparser
 from email.header import decode_header
 
-IPV4_RE = re.compile(r"\b(?:\d{1,3}\.){3}\d{1,3}\b")
-IPV6_RE = re.compile(r"\b([0-9a-fA-F:]{3,})\b")
+# IPv4 components - strict validation (0-255 per octet)
+IPV4SEG = r"(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])"
+IPV4ADDR = rf"\b(?:{IPV4SEG}\.){{3}}{IPV4SEG}\b"
+
+# IPv6 components  
+IPV6SEG = r"[0-9a-fA-F]{1,4}"
+IPV6ADDR = rf"""\b(?:
+    (?:{IPV6SEG}:){{7}}{IPV6SEG}|
+    (?:{IPV6SEG}:){{1,7}}:|
+    (?:{IPV6SEG}:){{1,6}}:{IPV6SEG}|
+    (?:{IPV6SEG}:){{1,5}}(?::{IPV6SEG}){{1,2}}|
+    (?:{IPV6SEG}:){{1,4}}(?::{IPV6SEG}){{1,3}}|
+    (?:{IPV6SEG}:){{1,3}}(?::{IPV6SEG}){{1,4}}|
+    (?:{IPV6SEG}:){{1,2}}(?::{IPV6SEG}){{1,5}}|
+    {IPV6SEG}:(?:(?::{IPV6SEG}){{1,6}})|
+    :(?:(?::{IPV6SEG}){{1,7}}|:)|
+    fe80:(?::{IPV6SEG}){{0,4}}%[0-9a-zA-Z]{{1,}}|
+    ::(?:ffff(?::0{{1,4}}){{0,1}}:){{0,1}}{IPV4ADDR}|
+    (?:{IPV6SEG}:){{1,4}}:{IPV4ADDR}
+)\b"""
+
+# Compile the patterns
+IPV4_RE = re.compile(rf"\b{IPV4ADDR}\b")
+IPV6_RE = re.compile(rf"\b{IPV6ADDR}\b", re.VERBOSE)
+
 TLS_TOKENS = ["esmtps", "esmtpsa", "smtps", "with tls", "starttls", "tls", "ssl", "encrypted"]
 
 @dataclass
