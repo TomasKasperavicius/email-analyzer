@@ -74,6 +74,8 @@ This command will:
 | `email_map.html` | Standalone Folium map |
 | `report.html` | Final interactive HTML report with embedded map |
 
+---
+
 ## Project requirements
 
 ### Template of the report:
