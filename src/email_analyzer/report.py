@@ -15,11 +15,11 @@ def build_report(eml_path: str,
     hops = parse_received_hops(msg)
     
     # geolocate first IP per hop
-    for h in hops:
-        if h.ips:
-            ip = h.ips[0]
-            geo = geolocate_ip(ip)
-            h.geo = geo
+    for hop in hops:
+        if hop.ips:
+            ip_address = hop.ips[0]
+            geo = geolocate_ip(ip_address)
+            hop.geo = geo
 
     auth = parse_authentication_results(msg)
     additional_headers = extract_additional_headers(msg)
@@ -34,7 +34,7 @@ def build_report(eml_path: str,
         'from': msg.get('From'),
         'to': msg.get('To'),
         'date': msg.get('Date'),
-        'hops': [h.to_dict() for h in hops],
+        'hops': [hop.to_dict() for hop in hops],
         'auth': auth,
         'additional_headers': additional_headers,
         'graph': graph_path,

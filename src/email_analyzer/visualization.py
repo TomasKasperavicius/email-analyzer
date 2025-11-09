@@ -10,29 +10,29 @@ def build_graph(hops: List[object], out_basename: str = 'hops', fmt: str = 'svg'
         print('graphviz python package not installed — skipping graph generation')
         return None
 
-    g = graphviz.Digraph('email_path', format=fmt)
-    for h in hops:
-        node_label = f"hop {h.index}\n"
-        if h.from_host:
-            node_label += f"from: {h.from_host}\n"
-        if h.ips:
-            node_label += f"ips: {','.join(h.ips)}\n"
-        if h.timestamp:
-            node_label += str(h.timestamp)
-        g.node(str(h.index), label=node_label, shape='box')
+    graph = graphviz.Digraph('email_path', format=fmt)
+    for hop in hops:
+        node_label = f"hop {hop.index}\n"
+        if hop.from_host:
+            node_label += f"from: {hop.from_host}\n"
+        if hop.ips:
+            node_label += f"ips: {','.join(hop.ips)}\n"
+        if hop.timestamp:
+            node_label += str(hop.timestamp)
+        graph.node(str(hop.index), label=node_label, shape='box')
 
-    for i in range(len(hops) - 1):
-        a = hops[i]
+    for index in range(len(hops) - 1):
+        current_hop = hops[index]
         label = 'unknown'
-        if a.tls is True:
+        if current_hop.tls is True:
             label = 'TLS'
-        elif a.tls is False:
+        elif current_hop.tls is False:
             label = 'plain'
-        g.edge(str(i), str(i + 1), label=label)
+        graph.edge(str(index), str(index + 1), label=label)
 
     try:
-        out = g.render(filename=out_basename, cleanup=True)
-        return out
+        output_path = graph.render(filename=out_basename, cleanup=True)
+        return output_path
     except Exception as e:
         print('graphviz render failed:', e)
         return None
@@ -42,18 +42,18 @@ def build_map(hops: List[object], out_html: str = 'hops_map.html') -> Optional[s
         print('folium not installed — skipping map generation')
         return None
 
-    coords = []
-    for h in hops:
-        if h.geo and h.geo.get('lat') and h.geo.get('lon'):
-            coords.append((h.geo['lat'], h.geo['lon']))
-    if not coords:
+    coordinates = []
+    for hop in hops:
+        if hop.geo and hop.geo.get('lat') and hop.geo.get('lon'):
+            coordinates.append((hop.geo['lat'], hop.geo['lon']))
+    if not coordinates:
         print('no geolocation coordinates — skipping map')
         return None
 
-    m = folium.Map(location=coords[0], zoom_start=3)
-    for h in hops:
-        if h.geo and h.geo.get('lat'):
-            folium.Marker([h.geo['lat'], h.geo['lon']], popup=f"hop {h.index}: {h.from_host or ','.join(h.ips or [])}").add_to(m)
-    folium.PolyLine(coords, tooltip='email path').add_to(m)
-    m.save(out_html)
+    map_obj = folium.Map(location=coordinates[0], zoom_start=3)
+    for hop in hops:
+        if hop.geo and hop.geo.get('lat'):
+            folium.Marker([hop.geo['lat'], hop.geo['lon']], popup=f"hop {hop.index}: {hop.from_host or ','.join(hop.ips or [])}").add_to(map_obj)
+    folium.PolyLine(coordinates, tooltip='email path').add_to(map_obj)
+    map_obj.save(out_html)
     return out_html

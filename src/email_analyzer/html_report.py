@@ -12,19 +12,19 @@ def _extract_latlon(hop: Dict[str, Any]):
         return None
     geo = hop.get("geo", {})
     if isinstance(geo, dict):
-        lat = geo.get("lat", geo.get("latitude"))
-        lon = geo.get("lon", geo.get("longitude"))
+        latitude = geo.get("lat", geo.get("latitude"))
+        longitude = geo.get("lon", geo.get("longitude"))
         try:
-            if lat is not None and lon is not None:
-                return float(lat), float(lon)
+            if latitude is not None and longitude is not None:
+                return float(latitude), float(longitude)
         except (ValueError, TypeError):
             pass
     for lat_key, lon_key in (("lat", "lon"), ("latitude", "longitude")):
-        lat = hop.get(lat_key)
-        lon = hop.get(lon_key)
+        latitude = hop.get(lat_key)
+        longitude = hop.get(lon_key)
         try:
-            if lat is not None and lon is not None:
-                return float(lat), float(lon)
+            if latitude is not None and longitude is not None:
+                return float(latitude), float(longitude)
         except (ValueError, TypeError):
             continue
     return None
@@ -223,33 +223,33 @@ def extract_timeline_data(report_data: Dict) -> List[Dict]:
     return timeline
 
 
-def _lon_label_cardinal(lon: int) -> str:
-    if lon == 0:
+def _lon_label_cardinal(longitude: int) -> str:
+    if longitude == 0:
         return "0"
-    direction = "W" if lon < 0 else "E"
-    return f"{abs(lon)}{direction}"
+    direction = "W" if longitude < 0 else "E"
+    return f"{abs(longitude)}{direction}"
 
 
-def _lat_label_cardinal(lat: int) -> str:
-    if lat == 0:
+def _lat_label_cardinal(latitude: int) -> str:
+    if latitude == 0:
         return "0"
-    direction = "S" if lat < 0 else "N"
-    return f"{abs(lat)}{direction}"
+    direction = "S" if latitude < 0 else "N"
+    return f"{abs(latitude)}{direction}"
 
 
-def _lonlat_to_svg_xy(lon: float, lat: float, width: int, height: int, padding: int = 20):
-    if lon < -180:
-        lon = -180
-    if lon > 180:
-        lon = 180
-    if lat < -90:
-        lat = -90
-    if lat > 90:
-        lat = 90
-    usable_w = width - 2*padding
-    usable_h = height - 2*padding
-    x = padding + ((lon + 180.0) / 360.0) * usable_w
-    y = padding + ((90.0 - lat) / 180.0) * usable_h
+def _lonlat_to_svg_xy(longitude: float, latitude: float, width: int, height: int, padding: int = 20):
+    if longitude < -180:
+        longitude = -180
+    if longitude > 180:
+        longitude = 180
+    if latitude < -90:
+        latitude = -90
+    if latitude > 90:
+        latitude = 90
+    usable_width = width - 2*padding
+    usable_height = height - 2*padding
+    x = padding + ((longitude + 180.0) / 360.0) * usable_width
+    y = padding + ((90.0 - latitude) / 180.0) * usable_height
     return x, y
 
 
@@ -257,37 +257,37 @@ def _build_svg_map(hops: List[Dict[str, Any]], width: int = 1000, height: int = 
     padding = 28
     markers = []
     for idx, hop in enumerate(hops):
-        ll = _extract_latlon(hop)
-        if ll:
-            markers.append((idx, ll[0], ll[1]))
+        latlon = _extract_latlon(hop)
+        if latlon:
+            markers.append((idx, latlon[0], latlon[1]))
     parts = []
     parts.append(
         f'<svg width="{width}" height="{height}" viewBox="0 0 {width} {height}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Hops map">')
     parts.append(
         f'<rect x="0" y="0" width="{width}" height="{height}" fill="#ffffff" stroke="#e6e6e6"/>')
-    for lon in range(-180, 181, 60):
-        x, _ = _lonlat_to_svg_xy(lon, 0, width, height, padding)
+    for longitude in range(-180, 181, 60):
+        x, _ = _lonlat_to_svg_xy(longitude, 0, width, height, padding)
         parts.append(
             f'<line x1="{x:.1f}" y1="{padding}" x2="{x:.1f}" y2="{height-padding}" stroke="#eee" stroke-width="1"/>')
-        label = _lon_label_cardinal(lon)
+        label = _lon_label_cardinal(longitude)
         parts.append(
             f'<text x="{x + 4:.1f}" y="{height - padding + 14:.1f}" font-size="10" fill="#333">{label}</text>')
-    for lat in range(-60, 61, 30):
-        _, y = _lonlat_to_svg_xy(0, lat, width, height, padding)
+    for latitude in range(-60, 61, 30):
+        _, y = _lonlat_to_svg_xy(0, latitude, width, height, padding)
         parts.append(
             f'<line x1="{padding}" y1="{y:.1f}" x2="{width-padding}" y2="{y:.1f}" stroke="#f6f6f6" stroke-width="1"/>')
-        label = _lat_label_cardinal(lat)
+        label = _lat_label_cardinal(latitude)
         parts.append(
             f'<text x="{4:.1f}" y="{y - 4:.1f}" font-size="10" fill="#333">{label}</text>')
     if len(markers) >= 2:
-        poly_pts = []
-        for (idx, lat, lon) in markers:
-            x, y = _lonlat_to_svg_xy(lon, lat, width, height, padding)
-            poly_pts.append(f"{x:.1f},{y:.1f}")
+        poly_points = []
+        for (idx, latitude, longitude) in markers:
+            x, y = _lonlat_to_svg_xy(longitude, latitude, width, height, padding)
+            poly_points.append(f"{x:.1f},{y:.1f}")
         parts.append(
-            f'<polyline points="{" ".join(poly_pts)}" fill="none" stroke="#3498db" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>')
-    for (idx, lat, lon) in markers:
-        x, y = _lonlat_to_svg_xy(lon, lat, width, height, padding)
+            f'<polyline points="{" ".join(poly_points)}" fill="none" stroke="#3498db" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>')
+    for (idx, latitude, longitude) in markers:
+        x, y = _lonlat_to_svg_xy(longitude, latitude, width, height, padding)
         hop = hops[idx]
         label = hop.get("label") or hop.get("host") or hop.get(
             "ip") or f"Hop {hop.get('index', idx+1)}"
@@ -300,26 +300,26 @@ def _build_svg_map(hops: List[Dict[str, Any]], width: int = 1000, height: int = 
             f'  <circle cx="{x:.1f}" cy="{y:.1f}" r="7" fill="#ffffff" stroke="{stroke}" stroke-width="2"/>')
         parts.append(
             f'  <circle cx="{x:.1f}" cy="{y:.1f}" r="2.6" fill="{stroke}" />')
-        lx = x + 10
-        ly = y - 10
-        loc = ""
+        label_x = x + 10
+        label_y = y - 10
+        location = ""
         if hop.get("geo"):
-            g = hop.get("geo", {})
-            city = g.get("city") or g.get("region") or ""
-            country = g.get("country") or ""
-            loc = ", ".join(p for p in (city, country) if p)
+            geo_data = hop.get("geo", {})
+            city = geo_data.get("city") or geo_data.get("region") or ""
+            country = geo_data.get("country") or ""
+            location = ", ".join(p for p in (city, country) if p)
         elif _extract_latlon(hop):
             lat2, lon2 = _extract_latlon(hop)
-            loc = f"{lat2:.4f}, {lon2:.4f}"
-        ip = hop.get("ip") or (", ".join(hop.get("ips", []))
+            location = f"{lat2:.4f}, {lon2:.4f}"
+        ip_address = hop.get("ip") or (", ".join(hop.get("ips", []))
                                if hop.get("ips") else "")
         label_text = f"{label}"
-        if ip:
-            label_text += f" ({ip})"
-        if loc:
-            label_text += f" — {loc}"
+        if ip_address:
+            label_text += f" ({ip_address})"
+        if location:
+            label_text += f" — {location}"
         parts.append(
-            f'  <text x="{lx:.1f}" y="{ly:.1f}" font-size="11" fill="#222">{html.escape(label_text)}</text>')
+            f'  <text x="{label_x:.1f}" y="{label_y:.1f}" font-size="11" fill="#222">{html.escape(label_text)}</text>')
         parts.append('</g>')
     parts.append(
         f'<rect x="{padding}" y="{height-padding+4}" width="{width-2*padding}" height="18" fill="#fafafa" stroke="none"/>')

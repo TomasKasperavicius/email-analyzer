@@ -13,29 +13,29 @@ from dateutil import parser as dtparser
 from email.header import decode_header
 
 # IPv4 components - strict validation (0-255 per octet)
-IPV4SEG = r"(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])"
-IPV4ADDR = rf"\b(?:{IPV4SEG}\.){{3}}{IPV4SEG}\b"
+IPV4_SEGMENT = r"(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])"
+IPV4_ADDRESS = rf"\b(?:{IPV4_SEGMENT}\.){{3}}{IPV4_SEGMENT}\b"
 
 # IPv6 components  
-IPV6SEG = r"[0-9a-fA-F]{1,4}"
-IPV6ADDR = rf"""\b(?:
-    (?:{IPV6SEG}:){{7}}{IPV6SEG}|
-    (?:{IPV6SEG}:){{1,7}}:|
-    (?:{IPV6SEG}:){{1,6}}:{IPV6SEG}|
-    (?:{IPV6SEG}:){{1,5}}(?::{IPV6SEG}){{1,2}}|
-    (?:{IPV6SEG}:){{1,4}}(?::{IPV6SEG}){{1,3}}|
-    (?:{IPV6SEG}:){{1,3}}(?::{IPV6SEG}){{1,4}}|
-    (?:{IPV6SEG}:){{1,2}}(?::{IPV6SEG}){{1,5}}|
-    {IPV6SEG}:(?:(?::{IPV6SEG}){{1,6}})|
-    :(?:(?::{IPV6SEG}){{1,7}}|:)|
-    fe80:(?::{IPV6SEG}){{0,4}}%[0-9a-zA-Z]{{1,}}|
-    ::(?:ffff(?::0{{1,4}}){{0,1}}:){{0,1}}{IPV4ADDR}|
-    (?:{IPV6SEG}:){{1,4}}:{IPV4ADDR}
+IPV6_SEGMENT = r"[0-9a-fA-F]{1,4}"
+IPV6_ADDRESS = rf"""\b(?:
+    (?:{IPV6_SEGMENT}:){{7}}{IPV6_SEGMENT}|
+    (?:{IPV6_SEGMENT}:){{1,7}}:|
+    (?:{IPV6_SEGMENT}:){{1,6}}:{IPV6_SEGMENT}|
+    (?:{IPV6_SEGMENT}:){{1,5}}(?::{IPV6_SEGMENT}){{1,2}}|
+    (?:{IPV6_SEGMENT}:){{1,4}}(?::{IPV6_SEGMENT}){{1,3}}|
+    (?:{IPV6_SEGMENT}:){{1,3}}(?::{IPV6_SEGMENT}){{1,4}}|
+    (?:{IPV6_SEGMENT}:){{1,2}}(?::{IPV6_SEGMENT}){{1,5}}|
+    {IPV6_SEGMENT}:(?:(?::{IPV6_SEGMENT}){{1,6}})|
+    :(?:(?::{IPV6_SEGMENT}){{1,7}}|:)|
+    fe80:(?::{IPV6_SEGMENT}){{0,4}}%[0-9a-zA-Z]{{1,}}|
+    ::(?:ffff(?::0{{1,4}}){{0,1}}:){{0,1}}{IPV4_ADDRESS}|
+    (?:{IPV6_SEGMENT}:){{1,4}}:{IPV4_ADDRESS}
 )\b"""
 
 # Compile the patterns
-IPV4_RE = re.compile(rf"\b{IPV4ADDR}\b")
-IPV6_RE = re.compile(rf"\b{IPV6ADDR}\b", re.VERBOSE)
+IPV4_RE = re.compile(IPV4_ADDRESS)
+IPV6_RE = re.compile(IPV6_ADDRESS, re.VERBOSE)
 
 TLS_TOKENS = ["esmtps", "esmtpsa", "smtps", "with tls", "starttls", "tls", "ssl", "encrypted"]
 
@@ -69,53 +69,54 @@ def load_email(path: str):
     return msg
 
 def _parse_received_single(raw: str, idx: int) -> Hop:
-    s = ' '.join(raw.split())
+    normalized_header = ' '.join(raw.split())
     hop = Hop(index=idx, raw=raw, ips=[], tls=None)
 
     # timestamp (after last semicolon)
     if ';' in raw:
-        right = raw.rsplit(';', 1)[1].strip()
+        timestamp_part = raw.rsplit(';', 1)[1].strip()
         try:
-            hop.timestamp = dtparser.parse(right)
+            hop.timestamp = dtparser.parse(timestamp_part)
         except Exception:
             hop.timestamp = None
 
     # from
-    m = re.search(r"\bfrom\s+(?P<from>.+?)\s+(?:by|with|id|for|;)", s, re.I)
-    if m:
-        hop.from_host = m.group('from').strip()
+    match = re.search(r"\bfrom\s+(?P<from>.+?)\s+(?:by|with|id|for|;)", normalized_header, re.I)
+    if match:
+        hop.from_host = match.group('from').strip()
 
-    m = re.search(r"\bby\s+(?P<by>.+?)\s+(?:with|id|for|;)", s, re.I)
-    if m:
-        hop.by_host = m.group('by').strip()
+    match = re.search(r"\bby\s+(?P<by>.+?)\s+(?:with|id|for|;)", normalized_header, re.I)
+    if match:
+        hop.by_host = match.group('by').strip()
 
-    m = re.search(r"\bwith\s+(?P<with>.+?)\s+(?:id|for|;)", s, re.I)
-    if m:
-        hop.with_proto = m.group('with').strip()
+    match = re.search(r"\bwith\s+(?P<with>.+?)\s+(?:id|for|;)", normalized_header, re.I)
+    if match:
+        hop.with_proto = match.group('with').strip()
 
-    m = re.search(r"\bid\s+(?P<id>\S+)", s, re.I)
-    if m:
-        hop.id = m.group('id').strip()
+    match = re.search(r"\bid\s+(?P<id>\S+)", normalized_header, re.I)
+    if match:
+        hop.id = match.group('id').strip()
 
-    m = re.search(r"\bfor\s+(?P<for>.+?)\s*(?:;|$)", s, re.I)
-    if m:
-        hop.for_addr = m.group('for').strip()
+    match = re.search(r"\bfor\s+(?P<for>.+?)\s*(?:;|$)", normalized_header, re.I)
+    if match:
+        hop.for_addr = match.group('for').strip()
 
     # ips
-    ips = IPV4_RE.findall(raw)
-    if not ips:
-        ipv6s = IPV6_RE.findall(raw)
-        ips = ipv6s
-    hop.ips = ips
+    ipv4_addresses = IPV4_RE.findall(raw)
+    if not ipv4_addresses:
+        ipv6_addresses = IPV6_RE.findall(raw)
+        hop.ips = ipv6_addresses
+    else:
+        hop.ips = ipv4_addresses
 
     # tls heuristics
-    lower = raw.lower()
-    for t in TLS_TOKENS:
-        if t in lower:
+    lower_raw = raw.lower()
+    for tls_token in TLS_TOKENS:
+        if tls_token in lower_raw:
             hop.tls = True
             break
     else:
-        if re.search(r"\bwith\s+(smtp|esmtp|lmtp)\b", lower):
+        if re.search(r"\bwith\s+(smtp|esmtp|lmtp)\b", lower_raw):
             hop.tls = False
         else:
             hop.tls = None
@@ -123,31 +124,31 @@ def _parse_received_single(raw: str, idx: int) -> Hop:
     return hop
 
 def parse_received_hops(msg) -> List[Hop]:
-    recs: Sequence[str] = msg.get_all('Received') or []
-    recs = list(reversed(recs))
+    received_headers: Sequence[str] = msg.get_all('Received') or []
+    received_headers = list(reversed(received_headers))
     hops: List[Hop] = []
-    for i, r in enumerate(recs):
-        hops.append(_parse_received_single(r, i))
+    for index, received_header in enumerate(received_headers):
+        hops.append(_parse_received_single(received_header, index))
     return hops
 
 def parse_authentication_results(msg) -> dict:
-    auths = msg.get_all('Authentication-Results') or []
+    auth_headers = msg.get_all('Authentication-Results') or []
     results = []
-    for a in auths:
+    for auth_header in auth_headers:
         entry = {}
-        m = re.search(r"\bspf=(pass|fail|neutral|none|softfail|temperror)\b", a, re.I)
-        if m:
-            entry['spf'] = m.group(1).lower()
-        m = re.search(r"\bdkim=(pass|fail|none|neutral)\b", a, re.I)
-        if m:
-            entry['dkim'] = m.group(1).lower()
-        m = re.search(r"\bdmarc=(pass|fail|none|bestguesspass)\b", a, re.I)
-        if m:
-            entry['dmarc'] = m.group(1).lower()
+        match = re.search(r"\bspf=(pass|fail|neutral|none|softfail|temperror)\b", auth_header, re.I)
+        if match:
+            entry['spf'] = match.group(1).lower()
+        match = re.search(r"\bdkim=(pass|fail|none|neutral)\b", auth_header, re.I)
+        if match:
+            entry['dkim'] = match.group(1).lower()
+        match = re.search(r"\bdmarc=(pass|fail|none|bestguesspass)\b", auth_header, re.I)
+        if match:
+            entry['dmarc'] = match.group(1).lower()
         results.append(entry)
 
     return {
-        'raw': auths,
+        'raw': auth_headers,
         'parsed': results,
         'dkim_signature': msg.get_all('DKIM-Signature') or [],
         'received_spf': msg.get_all('Received-SPF') or []

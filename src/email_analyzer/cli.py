@@ -12,16 +12,16 @@ from .html_report import generate_html_report
 LOG = logging.getLogger('email_analyzer')
 
 def main():
-    p = argparse.ArgumentParser(description='Enhanced Email Header Analyzer')
-    p.add_argument('eml', nargs='?', help='.eml file to analyze (or use --fetch for remote)')
-    p.add_argument('--geoip-db', help='path to GeoLite2-City.mmdb', default=os.getenv('GEOLITE_DB'))
-    p.add_argument('--ipinfo-token', help='IPInfo token', default=os.getenv('IPINFO_TOKEN'))
-    p.add_argument('--graph-out', help='graphviz output basename', default='hops')
-    p.add_argument('--map-out', help='folium map output html', default='hops_map.html')
-    p.add_argument('--html-out', help='HTML report output file', default='email_report.html')
-    p.add_argument('--fetch', help='Fetch EML from URL or IMAP server')
-    p.add_argument('--debug', action='store_true')
-    args = p.parse_args()
+    parser = argparse.ArgumentParser(description='Enhanced Email Header Analyzer')
+    parser.add_argument('eml', nargs='?', help='.eml file to analyze (or use --fetch for remote)')
+    parser.add_argument('--geoip-db', help='path to GeoLite2-City.mmdb', default=os.getenv('GEOLITE_DB'))
+    parser.add_argument('--ipinfo-token', help='IPInfo token', default=os.getenv('IPINFO_TOKEN'))
+    parser.add_argument('--graph-out', help='graphviz output basename', default='hops')
+    parser.add_argument('--map-out', help='folium map output html', default='hops_map.html')
+    parser.add_argument('--html-out', help='HTML report output file', default='email_report.html')
+    parser.add_argument('--fetch', help='Fetch EML from URL or IMAP server')
+    parser.add_argument('--debug', action='store_true')
+    args = parser.parse_args()
 
     logging.basicConfig(level=logging.DEBUG if args.debug else logging.INFO)
     
@@ -32,8 +32,8 @@ def main():
         try:
             eml_path = fetch_eml_from_url(args.fetch)
             LOG.info('Fetched EML from: %s', args.fetch)
-        except Exception as e:
-            LOG.error('Failed to fetch EML: %s', e)
+        except Exception as error:
+            LOG.error('Failed to fetch EML: %s', error)
             sys.exit(1)
 
     if not eml_path:
@@ -55,8 +55,8 @@ def main():
         LOG.info('Graph: %s', report.get('graph', 'Not generated'))
         LOG.info('Map: %s', report.get('map', 'Not generated'))
         
-    except Exception as e:
-        LOG.exception('Failed to analyze email: %s', e)
+    except Exception as error:
+        LOG.exception('Failed to analyze email: %s', error)
         sys.exit(1)
 
 if __name__ == '__main__':
