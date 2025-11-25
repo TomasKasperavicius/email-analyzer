@@ -37,7 +37,12 @@ def build_graph(hops: List[object], out_basename: str = 'hops', fmt: str = 'svg'
         print('graphviz render failed:', e)
         return None
 
-def build_map(hops: List[object], out_html: str = 'hops_map.html') -> Optional[str]:
+def build_map(hops: List[object], out_html: str = 'hops_map.html') -> Optional[dict]:
+    """Build interactive Folium map and return both HTML content and file path.
+    
+    Returns:
+        dict with 'html_content' (str) and 'file_path' (str), or None if map cannot be built
+    """
     if not folium:
         print('folium not installed — skipping map generation')
         return None
@@ -55,5 +60,11 @@ def build_map(hops: List[object], out_html: str = 'hops_map.html') -> Optional[s
         if hop.geo and hop.geo.get('lat'):
             folium.Marker([hop.geo['lat'], hop.geo['lon']], popup=f"hop {hop.index}: {hop.from_host or ','.join(hop.ips or [])}").add_to(map_obj)
     folium.PolyLine(coordinates, tooltip='email path').add_to(map_obj)
+    
+    # Save to file
     map_obj.save(out_html)
-    return out_html
+    
+    # Also return HTML content for embedding
+    html_content = map_obj._repr_html_()
+    
+    return {'html_content': html_content, 'file_path': out_html}

@@ -1,0 +1,38 @@
+<svg width="{{ width }}" height="{{ height }}" viewBox="0 0 {{ width }} {{ height }}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Hops map">
+    <rect x="0" y="0" width="{{ width }}" height="{{ height }}" fill="#ffffff" stroke="#e6e6e6"/>
+    
+    {# Grid lines - Longitude (vertical lines) #}
+    {% for lon in range(-180, 181, 60) %}
+    {% set x, _ = lon|to_svg_position(0, width, height, padding) %}
+    <line x1="{{ x }}" y1="{{ padding }}" x2="{{ x }}" y2="{{ height - padding }}" stroke="#eee" stroke-width="1"/>
+    <text x="{{ x + 4 }}" y="{{ height - padding + 14 }}" font-size="10" fill="#333">{{ lon|format_longitude }}</text>
+    {% endfor %}
+    
+    {# Grid lines - Latitude (horizontal lines) #}
+    {% for lat in range(-60, 61, 30) %}
+    {% set _, y = (0)|to_svg_position(lat, width, height, padding) %}
+    <line x1="{{ padding }}" y1="{{ y }}" x2="{{ width - padding }}" y2="{{ y }}" stroke="#f6f6f6" stroke-width="1"/>
+    <text x="4" y="{{ y - 4 }}" font-size="10" fill="#333">{{ lat|format_latitude }}</text>
+    {% endfor %}
+    
+    {# Route polyline connecting markers #}
+    {% if markers|length >= 2 %}
+    <polyline points="{% for marker in markers %}{% set x, y = marker.longitude|to_svg_position(marker.latitude, width, height, padding) %}{{ x }},{{ y }}{% if not loop.last %} {% endif %}{% endfor %}" 
+              fill="none" stroke="#3498db" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>
+    {% endif %}
+    
+    {# Hop markers #}
+    {% for marker in markers %}
+    {% set x, y = marker.longitude|to_svg_position(marker.latitude, width, height, padding) %}
+    {% set stroke_color = '#27ae60' if marker.tls == True else ('#e74c3c' if marker.tls == False else '#9b59b6') %}
+    <g class="marker" aria-label="{{ marker.label }}">
+        <circle cx="{{ x }}" cy="{{ y }}" r="7" fill="#ffffff" stroke="{{ stroke_color }}" stroke-width="2"/>
+        <circle cx="{{ x }}" cy="{{ y }}" r="2.6" fill="{{ stroke_color }}"/>
+        <text x="{{ x + 10 }}" y="{{ y - 10 }}" font-size="11" fill="#222">{{ marker.label_text }}</text>
+    </g>
+    {% endfor %}
+    
+    {# Legend #}
+    <rect x="{{ padding }}" y="{{ height - padding + 4 }}" width="{{ width - 2 * padding }}" height="18" fill="#fafafa" stroke="none"/>
+    <text x="{{ padding + 6 }}" y="{{ height - padding + 16 }}" font-size="11" fill="#666">Markers placed for hops with coordinates.</text>
+</svg>

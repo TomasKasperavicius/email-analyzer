@@ -6,32 +6,28 @@ import logging
 import os
 import sys
 
-from .report import build_report
+from .json_report import generate_json_report
 from .html_report import generate_html_report
-from .fetch_eml import fetch_eml_from_url
+from .fetch_eml import fetch_eml
 
 LOG = logging.getLogger('email_analyzer')
 
-def main():
+def cli_entrypoint():
     parser = argparse.ArgumentParser(description='Enhanced Email Header Analyzer')
     parser.add_argument('eml', nargs='?', help='.eml file to analyze (or use --fetch for remote)')
-    parser.add_argument('--geoip-db', help='path to GeoLite2-City.mmdb', default=os.getenv('GEOLITE_DB'))
-    parser.add_argument('--ipinfo-token', help='IPInfo token', default=os.getenv('IPINFO_TOKEN'))
-    parser.add_argument('--graph-out', help='graphviz output basename', default='hops')
-    parser.add_argument('--map-out', help='folium map output html', default='hops_map.html')
-    parser.add_argument('--html-out', help='HTML report output file', default='email_report.html')
+    parser.add_argument('--output-dir', help='output directory for all generated files (defaults to output.{filename})')
     parser.add_argument('--fetch', help='Fetch EML from URL or IMAP server')
     parser.add_argument('--debug', action='store_true')
-    args = parser.parse_args()
+    arguments = parser.parse_args()
 
-    logging.basicConfig(level=logging.DEBUG if args.debug else logging.INFO)
+    logging.basicConfig(level=logging.DEBUG if arguments.debug else logging.INFO)
     
     # Handle EML fetching
-    eml_path = args.eml
-    if args.fetch:
+    eml_path = arguments.eml
+    if arguments.fetch:
         try:
-            eml_path = fetch_eml_from_url(args.fetch)
-            LOG.info('Fetched EML from: %s', args.fetch)
+            eml_path = fetch_eml(arguments.fetch)
+            LOG.info('Fetched EML from: %s', arguments.fetch)
         except Exception as error:
             LOG.error('Failed to fetch EML: %s', error)
             sys.exit(1)
@@ -43,14 +39,28 @@ def main():
     LOG.info('Analyzing %s', eml_path)
 
     try:
-        report = build_report(eml_path,
-                              graph_out=args.graph_out, map_out=args.map_out)
+        # Determine output directory
+        base_name = os.path.splitext(os.path.basename(eml_path))[0]
+        output_dir = arguments.output_dir if arguments.output_dir else f"output.{base_name}"
+        
+        # Create output directory if it doesn't exist
+        os.makedirs(output_dir, exist_ok=True)
+        
+        # Build output paths with static filenames
+        graph_out = os.path.join(output_dir, 'hops_diagram')
+        map_out = os.path.join(output_dir, 'hops_map.html')
+        html_out = os.path.join(output_dir, 'report.html')
+        json_out = os.path.join(output_dir, 'report.json')
+        
+        report = generate_json_report(eml_path,
+                              graph_out=graph_out, map_out=map_out, json_out=json_out)
         
         # Generate HTML report
-        html_path = generate_html_report(report, args.html_out)
+        html_path = generate_html_report(report, html_out)
         
         LOG.info('Analysis complete!')
-        LOG.info('JSON Report: %s.report.json', os.path.splitext(eml_path)[0])
+        LOG.info('Output directory: %s', output_dir)
+        LOG.info('JSON Report: %s', json_out)
         LOG.info('HTML Report: %s', html_path)
         LOG.info('Graph: %s', report.get('graph', 'Not generated'))
         LOG.info('Map: %s', report.get('map', 'Not generated'))
@@ -58,6 +68,3 @@ def main():
     except Exception as error:
         LOG.exception('Failed to analyze email: %s', error)
         sys.exit(1)
-
-if __name__ == '__main__':
-    main()
