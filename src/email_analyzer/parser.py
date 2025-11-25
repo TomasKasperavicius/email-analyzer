@@ -4,7 +4,7 @@ Parser utilities for email headers.
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass, asdict, field
+from dataclasses import dataclass, asdict
 from datetime import datetime
 from email import policy
 from email.parser import BytesParser
