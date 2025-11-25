@@ -236,13 +236,10 @@ def generate_html_report(report_data: Dict, output_path: str = "email_report.htm
         # TLS status
         if hop.get('tls') is True:
             hop_data['tls_symbol'] = '✅'
-            hop_data['tls_class'] = 'success'
         elif hop.get('tls') is False:
             hop_data['tls_symbol'] = '❌'
-            hop_data['tls_class'] = 'danger'
         else:
             hop_data['tls_symbol'] = '❓'
-            hop_data['tls_class'] = 'secondary'
         
         # Location
         coordinates = _extract_latitude_longitude(hop)
