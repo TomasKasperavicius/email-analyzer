@@ -9,12 +9,14 @@ Analyze `.eml` email files to extract delivery hops, evaluate authentication and
 - 🔍 Parses raw email headers to reconstruct SMTP delivery paths  
 - 🛡️ Checks authentication results (SPF, DKIM, DMARC)  
 - 🔒 Detects TLS usage for each hop  
-- 🌍 Generates:
-  - **Graph** visualization of hops (`--graph-out`)
-  - **Interactive Folium map** (`--map-out`)
-  - **HTML report** (`--html-out`)
+- 🌍 Generates organized output folder with:
+  - **Graph** visualization of hops (`hops_diagram.svg`)
+  - **Interactive Folium map** (`hops_map.html`)
+  - **HTML report** (`report.html`) with embedded map
+  - **JSON report** (`report.json`) with complete analysis data
 - 🧭 Automatically embeds the Folium map directly into the HTML report  
 - 🗺️ Map labels displayed in **English** (using CartoDB Positron tiles)
+- 📁 Clean output organization with `output.{filename}/` folders
 
 ---
 
@@ -54,7 +56,7 @@ pip install -r requirements.txt
 ### Basic Example (from root path)
 
 ```bash
-python src/main.py samples/sample.eml --graph-out email_hops --map-out email_map.html --html-out report.html
+python src/main.py samples/sample.eml --output-dir output_sample
 ```
 
 This command will:
@@ -70,9 +72,10 @@ This command will:
 
 | File | Description |
 |------|--------------|
-| `email_hops.svg` | Graph of SMTP delivery hops |
-| `email_map.html` | Standalone Folium map |
-| `report.html` | Final interactive HTML report with embedded map |
+| `hops_diagram.svg` | Graph of SMTP delivery hops |
+| `hops_map.html` | Standalone Folium interactive map |
+| `report.html` | Full interactive HTML report with embedded SVG map |
+| `report.json` | Complete analysis data in JSON format |
 
 ---
 
