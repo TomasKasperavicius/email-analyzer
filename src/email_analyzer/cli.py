@@ -8,7 +8,7 @@ import sys
 
 from .json_report import generate_json_report
 from .html_report import generate_html_report
-from .fetch_eml import fetch_eml_from_url
+from .fetch_eml import fetch_eml
 
 LOG = logging.getLogger('email_analyzer')
 
@@ -26,7 +26,7 @@ def cli_entrypoint():
     eml_path = arguments.eml
     if arguments.fetch:
         try:
-            eml_path = fetch_eml_from_url(arguments.fetch)
+            eml_path = fetch_eml(arguments.fetch)
             LOG.info('Fetched EML from: %s', arguments.fetch)
         except Exception as error:
             LOG.error('Failed to fetch EML: %s', error)

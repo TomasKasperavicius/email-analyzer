@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 import sys
 import os
-import argparse
 
 # Add src to Python path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'email_analyzer'))
+current_directory = os.path.dirname(__file__)
+email_analyzer_directory = os.path.join(current_directory, 'email_analyzer')
+sys.path.insert(0, email_analyzer_directory)
 
 from email_analyzer.cli import cli_entrypoint
 
